@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Goalfinity Institute — Student Career Readiness Assessment Platform. Diagnostic evaluation for AI, Digital Marketing, and Cloud Computing courses.">
+  <title>Goalfinity Institute — Student Career Readiness Assessment Platform</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/report.css">
+</head>
+<body>
+
+  <!-- ========================================================================
+       TOP HEADER & BRAND BAR
+       ======================================================================== -->
+  <header class="site-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <h1 class="brand-title">
+          <span class="brand-logo-badge">GOALFINITY</span>
+          Goalfinity Institute
+        </h1>
+        <p class="brand-tagline">Discover Your Skills. Build Your Future.</p>
+      </div>
+      <div class="header-actions">
+        <span class="assessment-id-badge" title="Unique Assessment ID">
+          ID: <span id="display-assessment-id">GF-INITIALIZING</span>
+        </span>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-clear-draft" title="Clear saved draft data">
+          Clear Draft
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       ALERT BANNERS (OFFLINE QUEUE & DRAFT RESTORATION)
+       ======================================================================== -->
+  <div id="offline-queue-alert" class="alert-banner alert-banner-warning" style="display: none;">
+    <span>
+      <strong>Offline Submissions Pending:</strong>
+      You have <strong id="offline-queue-count">0</strong> assessment(s) stored locally that haven't synced to Google Sheets.
+    </span>
+    <button type="button" class="btn btn-sm btn-dark" id="btn-sync-offline-queue">Sync Offline Queue</button>
+  </div>
+
+  <div id="draft-notice-banner" class="alert-banner alert-banner-info" style="display: none;">
+    <span>
+      <strong>Draft Restored:</strong> An in-progress student assessment draft was automatically loaded from this browser's local storage.
+    </span>
+    <span class="text-muted" style="font-size: 0.8rem;">Autosave active</span>
+  </div>
+
+  <!-- ========================================================================
+       WIZARD PROGRESS INDICATOR
+       ======================================================================== -->
+  <div class="progress-container">
+    <div class="progress-header">
+      <span class="progress-step-label" id="progress-step-label">Step 1 of 10</span>
+      <span class="text-muted" style="font-size: 0.82rem;">Career Readiness Diagnostic</span>
+    </div>
+    <div class="progress-track-main">
+      <div class="progress-bar-fill" id="main-progress-bar" style="width: 10%;"></div>
+    </div>
+    <div class="step-indicators-scroll">
+      <span class="step-indicator-pill step-active" data-step="1">1. Intake</span>
+      <span class="step-indicator-pill" data-step="2">2. Course</span>
+      <span class="step-indicator-pill" data-step="3">3. Common Readiness</span>
+      <span class="step-indicator-pill" data-step="4">4. Domain Diagnostic</span>
+      <span class="step-indicator-pill" data-step="5">5. Practical Check</span>
+      <span class="step-indicator-pill" data-step="6">6. Review</span>
+      <span class="step-indicator-pill" data-step="7">7. Scoring</span>
+      <span class="step-indicator-pill" data-step="8">8. Sheets Sync</span>
+      <span class="step-indicator-pill" data-step="9">9. Student Report</span>
+      <span class="step-indicator-pill" data-step="10">10. Next Actions</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MAIN APPLICATION CONTAINER (STEPS 1 - 10)
+       ======================================================================== -->
+  <main class="main-wrapper">
+
+    <!-- --------------------------------------------------------------------
+         STEP 1: STUDENT INTAKE FORM
+         -------------------------------------------------------------------- -->
+    <section class="step-section" id="step-section-1" style="display: block;">
+      <div class="step-card-header">
+        <span class="step-badge">Step 1 of 10</span>
+        <h2 class="step-title">Student Registration & Intake</h2>
+        <p class="step-description">Capture mandatory student contact information, academic background, and counselling consent before beginning the diagnostic questionnaire.</p>
+      </div>
+
+      <div class="step-card-body">
+        <form id="intake-form" novalidate onsubmit="return false;">
+          <input type="hidden" id="intake-assessment-id" value="">
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="student-name">Student Full Name <span class="required-star">*</span></label>
+              <input type="text" class="form-input" id="student-name" placeholder="e.g., Ananya Sharma" required autocomplete="name">
+              <div class="field-error" id="student-name-error" style="display:none;"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="student-email">Email Address <span class="required-star">*</span></label>
+              <input type="email" class="form-input" id="student-email" placeholder="e.g., student@example.com" required autocomplete="email">
+              <div class="field-error" id="student-email-error" style="display:none;"></div>
+              <span class="form-hint">Official diagnostic report will be transmitted to this email.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="student-mobile">Mobile Number (with Country Code) <span class="required-star">*</span></label>
+              <input type="tel" class="form-input" id="student-mobile" placeholder="e.g., +91 9876543210 or +1 415 555 2671" required autocomplete="tel">
+              <div class="field-error" id="student-mobile-error" style="display:none;"></div>
+              <span class="form-hint">Accepts international country codes. E.g., +91, +1, +44, +971, +65.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="course-interest">Preferred Course Track <span class="required-star">*</span></label>
+              <select class="form-select" id="course-interest" required>
+                <option value="">— Select Course of Interest —</option>
+                <option value="ai">Artificial Intelligence (AI)</option>
+                <option value="digital_marketing">Digital Marketing</option>
+                <option value="cloud_computing">Cloud Computing</option>
+              </select>
+              <div class="field-error" id="course-interest-error" style="display:none;"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="student-education">Highest Educational Qualification <span class="required-star">*</span></label>
+              <select class="form-select" id="student-education" required>
+                <option value="">— Select Qualification —</option>
+                <option value="High School / 12th">High School / 12th Standard</option>
+                <option value="Diploma">Polytechnic / Vocational Diploma</option>
+                <option value="Bachelor's Degree">Bachelor's Degree (Pursuing or Completed)</option>
+                <option value="Master's Degree">Master's Degree (Pursuing or Completed)</option>
+                <option value="Doctorate / PhD">Doctorate / PhD</option>
+                <option value="Other">Other Equivalent Qualification</option>
+              </select>
+              <div class="field-error" id="student-education-error" style="display:none;"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="student-specialization">Degree Subject / Specialization</label>
+              <input type="text" class="form-input" id="student-specialization" placeholder="e.g., Computer Science, Commerce, Mechanical, Arts">
+              <span class="form-hint">Specialization or major subject.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="student-status">Current Employment / Study Status <span class="required-star">*</span></label>
+              <select class="form-select" id="student-status" required>
+                <option value="">— Select Current Status —</option>
+                <option value="studying">Currently Studying (College / University)</option>
+                <option value="employed">Employed (Working Professional)</option>
+                <option value="unemployed">Seeking Employment / Fresh Graduate</option>
+                <option value="career_transition">Career Transitioning / Returning to Work</option>
+              </select>
+              <div class="field-error" id="student-status-error" style="display:none;"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="student-job-title">Current Job Title (If Employed)</label>
+              <input type="text" class="form-input" id="student-job-title" placeholder="e.g., Software Trainee, Sales Associate, Analyst">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="student-experience">Total Professional Experience</label>
+              <select class="form-select" id="student-experience">
+                <option value="0">0 Years (Fresher / Student)</option>
+                <option value="less_than_1">&lt; 1 Year</option>
+                <option value="1_to_3">1 – 3 Years</option>
+                <option value="3_to_5">3 – 5 Years</option>
+                <option value="5_plus">5+ Years</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="learning-mode">Preferred Learning Mode</label>
+              <select class="form-select" id="learning-mode">
+                <option value="Online Live">Live Online Interactive Cohort</option>
+                <option value="Hybrid / Classroom">Classroom / Hybrid Mentorship</option>
+                <option value="Self-Paced with Mentorship">Self-Paced with 1-on-1 Milestone Mentorship</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Consent & Privacy Notice -->
+          <div class="consent-box">
+            <label class="checkbox-label" for="student-consent">
+              <input type="checkbox" id="student-consent" required>
+              <span>I consent to Goalfinity Institute collecting and processing the above contact and assessment information for academic counselling and personalized reporting. <span class="required-star">*</span></span>
+            </label>
+            <div class="field-error" id="student-consent-error" style="display:none;"></div>
+            <p class="privacy-notice-text">
+              <strong>Privacy Notice:</strong> Goalfinity Institute uses your details strictly for educational assessment, roadmap recommendations, and official counselling communications. Your data is never sold or shared with unauthorized commercial parties.
+            </p>
+          </div>
+        </form>
+      </div>
+
+      <div class="wizard-footer-bar">
+        <div></div>
+        <button type="button" class="btn btn-primary" id="btn-intake-next">
+          Begin Assessment &bull; Next &rarr;
+        </button>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         STEP 2: COURSE CONFIRMATION & ORIENTATION
+         -------------------------------------------------------------------- -->
+    <section class="step-section" id="step-section-2">
+      <div class="step-card-header">
+        <span class="step-badge">Step 2 of 10</span>
+        <h2 class="step-title">Course Confirmation & Track Orientation</h2>
+        <p class="step-description">Confirm the selected career path with <strong id="course-confirm-student">the candidate</strong> before commencing the diagnostic.</p>
+      </div>
+
+      <div class="step-card-body">
+        <div class="review-card" style="border-left: 4px solid var(--accent-teal);">
+          <span class="step-badge">Selected Course</span>
+          <h3 id="course-confirm-title" style="font-size: 1.4rem; color: var(--primary-navy); margin: 0.5rem 0;">Artificial Intelligence</h3>
+          <p id="course-confirm-desc" class="text-muted" style="font-size: 0.95rem; line-height: 1.5;">Foundational & applied AI, Python programming, data analytics, predictive modeling, and generative AI systems.</p>
+        </div>
+
+        <div style="margin-top: 1.5rem; background-color: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <h4 style="color: var(--secondary-navy); margin-bottom: 0.5rem;">Counsellor Orientation Tips:</h4>
+          <ul style="padding-left: 1.25rem; font-size: 0.9rem; color: #334155; line-height: 1.6;">
+            <li>Conduct the assessment conversationally — ask questions naturally while recording responses.</li>
+            <li>Reassure the candidate that beginner ratings and concept uncertainties are completely normal and help us design their optimal starting path.</li>
+            <li>Self-rating questions use a consistent 1–5 scale with an explicit <em>"Not sure"</em> option to prevent guesswork.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="wizard-footer-bar">
+        <button type="button" class="btn btn-secondary btn-prev-step" data-target="1">&larr; Back to Intake</button>
+        <button type="button" class="btn btn-primary" id="btn-course-confirm">
+          Proceed to Common Assessment &bull; Next &rarr;
+        </button>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         STEP 3: COMMON CAREER & LEARNING READINESS ASSESSMENT
+         -------------------------------------------------------------------- -->
+    <section class="step-section" id="step-section-3">
+      <div class="step-card-header">
+        <span class="step-badge">Step 3 of 10</span>
+        <h2 class="step-title">Common Career & Learning Readiness</h2>
+        <p class="step-description">Evaluates career motivation, timeline, weekly study commitment, and digital learning comfort.</p>
+      </div>
+
+      <div class="step-card-body">
+        <div id="common-questions-container">
+          <!-- Dynamically populated from QUESTION_BANK.commonBackground & commonReadiness -->
+        </div>
+      </div>
+
+      <div class="wizard-footer-bar">
+        <button type="button" class="btn btn-secondary btn-prev-step" data-target="2">&larr; Back</button>
+        <button type="button" class="btn btn-primary btn-next-step" data-target="4">
+          Proceed to Domain Diagnostic &bull; Next &rarr;
+        </button>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         STEP 4: COURSE-SPECIFIC TECHNICAL ASSESSMENT
+         -------------------------------------------------------------------- -->
+    <section class="step-section" id="step-section-4">
+      <div class="step-card-header">
+        <span class="step-badge">Step 4 of 10</span>
+        <h2 class="step-title">Course-Specific Diagnostic Assessment</h2>
+        <p class="step-description">Deep-dive technical, analytical, and scenario-based diagnostic tailored to the chosen track.</p>
+      </div>
+
+      <div class="step-card-body">
+        <div id="technical-questions-container">
+          <!-- Dynamically populated based on selected course -->
+        </div>
+      </div>
+
+      <div class="wizard-footer-bar">
+        <button type="button" class="btn btn-secondary btn-prev-step" data-target="3">&larr; Back</button>
+        <button type="button" class="btn btn-primary btn-next-step" data-target="5">
+          Proceed to Practical Assessment &bull; Next &rarr;
+        </button>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         STEP 5: PRACTICAL SKILL ASSESSMENT
+         -------------------------------------------------------------------- -->
+    <section class="step-section" id="step-section-5">
+      <div class="step-card-header">
+        <span class="step-badge">Step 5 of 10</span>
+        <h2 class="step-title">Practical Skill & Reasoning Check</h2>
+        <p class="step-description">5–10 minute objective multiple-choice check and counsellor scenario evaluation rubric.</p>
+      </div>
+
+      <div class="step-card-body">
+        <div id="practical-quiz-container">
+          <!-- Dynamically populated practical MCQs + Rubric -->
+        </div>
+      </div>
+
+      <div class="wizard-footer-bar">
+        <button type="button" class="btn btn-secondary btn-prev-step" data-target="4">&larr; Back</button>
+        <button type="button" class="btn btn-primary btn-next-step" data-target="6">
+          Proceed to Review &bull; Next &rarr;
+        </button>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         STEP 6: REVIEW ANSWERS & COUNSELLOR OBSERVATIONS
+         -------------------------------------------------------------------- -->
+    <section class="step-section" id="step-section-6">
+      <div class="step-card-header">
+        <span class="step-badge">Step 6 of 10</span>
+        <h2 class="step-title">Review Answers & Counsellor Observations</h2>
+        <p class="step-description">Verify entered candidate responses and record confidential counselling observations.</p>
+      </div>
+
+      <div class="step-card-body">
+        <div id="review-summary-container">
+          <!-- Populated by AssessmentController.renderReviewSummary() -->
+        </div>
+
+        <div class="counsellor-notes-section">
+          <label class="form-label" for="counsellor-notes-input"><strong>Academic Counsellor Observations & Notes</strong></label>
+          <textarea class="form-textarea" id="counsellor-notes-input" rows="4" placeholder="Record qualitative observations: candidate's enthusiasm, communication clarity, learning mindset, potential scheduling constraints, or pacing recommendations..."></textarea>
+
+          <div style="margin-top: 1rem;">
+            <label class="checkbox-label" for="include-counsellor-notes">
+              <input type="checkbox" id="include-counsellor-notes">
+              <span>Include these counsellor notes in the student's printable report (Leave unchecked to keep notes internal).</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-footer-bar">
+        <button type="button" class="btn btn-secondary btn-prev-step" data-target="5">&larr; Back to Practical</button>
+        <button type="button" class="btn btn-primary" id="btn-calculate-score">
+          Calculate Assessment &bull; Next &rarr;
+        </button>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         STEP 7: SCORE CALCULATION & RECOMMENDATION
+         -------------------------------------------------------------------- -->
+    <section class="step-section" id="step-section-7">
+      <div class="step-card-header">
+        <span class="step-badge">Step 7 of 10</span>
+        <h2 class="step-title">Readiness Score & Guidance Band</h2>
+        <p class="step-description">Calculated weighted score breakdown across foundational, practical, and readiness categories.</p>
+      </div>
+
+      <div class="step-card-body">
+        <div id="score-preview-container">
+          <!-- Populated by AssessmentController.renderScorePreviewStep() -->
+        </div>
+      </div>
+
+      <div class="wizard-footer-bar">
+        <button type="button" class="btn btn-secondary btn-prev-step" data-target="6">&larr; Back to Review</button>
+        <button type="button" class="btn btn-primary" id="btn-proceed-to-save">
+          Save to Google Sheets &bull; Next &rarr;
+        </button>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         STEP 8: SAVE TO GOOGLE SHEETS
+         -------------------------------------------------------------------- -->
+    <section class="step-section" id="step-section-8">
+      <div class="step-card-header">
+        <span class="step-badge">Step 8 of 10</span>
+        <h2 class="step-title">Google Sheets Database Synchronization</h2>
+        <p class="step-description">Permanently records the student assessment record, category scores, and question audit trail.</p>
+      </div>
+
+      <div class="step-card-body">
+        <div id="sheets-sync-status" class="sync-status-box status-loading" style="display:none;">
+          <span id="sync-spinner" class="spinner"></span> Ready to transmit data.
+        </div>
+
+        <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;">
+          <h4 style="color: var(--secondary-navy); margin-bottom: 0.5rem;">Database Sync Protocol:</h4>
+          <p style="font-size: 0.9rem; color: #334155; line-height: 1.5;">
+            Click <strong>"Synchronize Record"</strong> below to securely transmit this assessment to the Goalfinity Google Spreadsheet via the Google Apps Script integration.
+          </p>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+            <em>Note: If you are offline or the web app URL is not yet configured, the assessment is automatically saved in your browser's offline queue so no data is ever lost.</em>
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-primary" id="btn-sync-sheets">
+            Synchronize Record to Google Sheets
+          </button>
+          <button type="button" class="btn btn-danger-outline" id="btn-retry-sync" style="display:none;">
+            Retry Submission
+          </button>
+          <button type="button" class="btn btn-secondary" id="btn-view-report-offline">
+            View / Print Report Offline &rarr;
+          </button>
+        </div>
+      </div>
+
+      <div class="wizard-footer-bar">
+        <button type="button" class="btn btn-secondary btn-prev-step" data-target="7">&larr; Back to Scores</button>
+        <button type="button" class="btn btn-primary" id="btn-proceed-to-report" style="display:none;">
+          View Student Report &bull; Next &rarr;
+        </button>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         STEP 9: 4-PAGE DYNAMIC STUDENT REPORT
+         -------------------------------------------------------------------- -->
+    <section class="step-section" id="step-section-9">
+      <div class="step-card-header no-print">
+        <span class="step-badge">Step 9 of 10</span>
+        <h2 class="step-title">Official Student Career Readiness Report</h2>
+        <p class="step-description">Polished, print-ready 4-page diagnostic report with visual skills bars, gap analysis, and roadmap.</p>
+      </div>
+
+      <div class="step-card-body">
+        <div class="print-actions-bar no-print" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; justify-content: flex-end;">
+          <button type="button" class="btn btn-dark" id="btn-print-report">
+            &#128438; Print Report
+          </button>
+          <button type="button" class="btn btn-primary" id="btn-download-pdf">
+            &#128190; Download / Save as PDF
+          </button>
+          <button type="button" class="btn btn-secondary" id="btn-to-step-10">
+            Proceed to Next Actions &bull; Next &rarr;
+          </button>
+        </div>
+
+        <!-- Printable 4-page report DOM container -->
+        <div id="report-view-container">
+          <!-- Dynamically populated by Report.renderReportHTML() -->
+        </div>
+      </div>
+
+      <div class="wizard-footer-bar no-print">
+        <button type="button" class="btn btn-secondary btn-prev-step" data-target="8">&larr; Back to Database</button>
+        <button type="button" class="btn btn-primary btn-next-step" data-target="10">
+          Counsellor Action Plan &bull; Next &rarr;
+        </button>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         STEP 10: COUNSELLOR FOLLOW-UP & ACTION PLAN
+         -------------------------------------------------------------------- -->
+    <section class="step-section" id="step-section-10">
+      <div class="step-card-header">
+        <span class="step-badge">Step 10 of 10</span>
+        <h2 class="step-title">Counsellor Follow-up & Next Actions</h2>
+        <p class="step-description">Structured next steps to guide the student enquiry from assessment to enrollment.</p>
+      </div>
+
+      <div class="step-card-body">
+        <div class="review-card" style="border-left: 4px solid var(--accent-teal);">
+          <h4>Diagnostic Complete for <span id="action-plan-student-name">Student</span></h4>
+          <p style="font-size: 0.92rem; color: #334155; margin-top: 0.35rem;">
+            <strong>Recommended Next Step:</strong> <span id="action-plan-recommended-action">Schedule curriculum orientation session.</span>
+          </p>
+        </div>
+
+        <div style="background-color: #ffffff; border: 1.5px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; margin-top: 1.5rem;">
+          <h4 style="color: var(--secondary-navy); margin-bottom: 0.85rem;">Sales Counsellor Checklist:</h4>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;">
+            <label class="checkbox-label">
+              <input type="checkbox">
+              <span>Share the generated 4-page PDF Career Readiness Report via email or print a physical copy.</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox">
+              <span>Review the diagnosed skill gaps with the candidate and explain how Goalfinity's guided labs resolve them.</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox">
+              <span>Align on weekly study commitment (10–15 hrs or 15–20 hrs) and project target completion date.</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox">
+              <span>Schedule 1-on-1 academic faculty interview or cohort demo session.</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="margin-top: 2rem; text-align: center;">
+          <button type="button" class="btn btn-dark btn-lg" id="btn-new-assessment" style="padding: 0.9rem 2rem; font-size: 1.05rem;">
+            + Start New Student Assessment
+          </button>
+        </div>
+      </div>
+
+      <div class="wizard-footer-bar">
+        <button type="button" class="btn btn-secondary btn-prev-step" data-target="9">&larr; Back to Report</button>
+        <div></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================================
+       FOOTER
+       ======================================================================== -->
+  <footer style="text-align: center; padding: 2rem 1rem; color: var(--text-muted); font-size: 0.82rem; border-top: 1px solid var(--border-color); background-color: #ffffff;">
+    <p>&copy; Goalfinity Institute. All Rights Reserved. Student Career Readiness Assessment Platform.</p>
+    <p style="margin-top: 0.25rem;">Built for GitHub Pages &bull; Google Sheets Database Integration Layer</p>
+  </footer>
+
+  <!-- ========================================================================
+       APPLICATION SCRIPTS (ORDER MATTERS)
+       ======================================================================== -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/validation.js"></script>
+  <script src="assets/js/questions.js"></script>
+  <script src="assets/js/scoring.js"></script>
+  <script src="assets/js/recommendations.js"></script>
+  <script src="assets/js/sheets-client.js"></script>
+  <script src="assets/js/report.js"></script>
+  <script src="assets/js/intake.js"></script>
+  <script src="assets/js/assessment.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
