@@ -83,7 +83,7 @@ const LOGO_SRC = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXQAAAEzCAYAAAAh
 const COURSES = {
   ai:{name:"Artificial Intelligence",blurb:"Machine learning, deep learning, GenAI"},
   dm:{name:"Digital Marketing",blurb:"SEO, paid ads, content, analytics"},
-  cc:{name:"Cloud Computing",blurb:"Cloud platforms, DevOps, containers"}
+  ib:{name:"Investment Banking",blurb:"Valuation, financial modelling, M&A"}
 };
 /* Strict confidence scoring: only the top answer earns a high score. Any doubt scores low. */
 const SC4=[100,35,15,0,null];
@@ -118,16 +118,16 @@ const BANK={
   ["Have you used tools such as Google Analytics, Canva, Meta Business Suite, or SEO tools?","Marketing tools",E],
   ["Have you run, simulated, or helped manage a paid ad, email, or social media campaign?","Campaign execution",E],
   ["Have you built a landing page or website, or measured and reported campaign results?","Web & reporting",E]],
- cc:[
-  ["How familiar are you with cloud computing models: IaaS, PaaS, SaaS, and public versus private cloud?","Cloud fundamentals",K],
-  ["How familiar are you with virtual machines, cloud storage, databases, and virtual networks?","Compute, storage & network",K],
-  ["How familiar are you with identity and access management, cloud security, and shared responsibility?","Cloud security & IAM",K],
-  ["How familiar are you with Linux, the command line, and basic networking such as IP, DNS, and firewalls?","Linux & networking",K],
-  ["How familiar are you with containers, Docker, and Kubernetes?","Containers & Kubernetes",K],
-  ["How familiar are you with DevOps, CI/CD pipelines, and Infrastructure as Code such as Terraform?","DevOps & IaC",K],
-  ["Have you used AWS, Microsoft Azure, or Google Cloud, even through a free tier or lab?","Cloud platform use",E],
-  ["Have you launched a virtual machine, hosted a website, or configured cloud storage?","Hands-on cloud setup",E],
-  ["Have you deployed an application using CI/CD, or worked on monitoring, scaling, or cost control?","Deployment & operations",E]]
+ ib:[
+  ["How familiar are you with financial statements: the income statement, balance sheet, and cash flow statement?","Financial statements",K],
+  ["How familiar are you with valuation methods such as DCF, comparable companies, and precedent transactions?","Valuation methods",K],
+  ["How familiar are you with financial modelling and Excel, including three-statement models and financial formulas?","Financial modelling & Excel",K],
+  ["How familiar are you with mergers and acquisitions, IPOs, and how investment banks raise capital for companies?","M&A, IPOs & capital raising",K],
+  ["How familiar are you with equity markets, bonds, interest rates, and derivatives?","Capital markets & instruments",K],
+  ["How familiar are you with corporate finance ideas such as time value of money, WACC, and capital structure?","Corporate finance concepts",K],
+  ["Have you built a financial model or analysed company financials in Excel?","Excel financial modelling",E],
+  ["Have you valued a company, written an equity research note, or prepared a case study or pitch?","Valuation & research work",E],
+  ["Have you practised markets through paper trading, a stock-market simulation, a finance competition, or a finance certification course?","Market practice & certification",E]]
 };
 function buildQs(course){
   const qs=[
@@ -145,7 +145,7 @@ const CATS={found:"Technology foundation",know:"Course knowledge",exp:"Hands-on 
 const PATH={
  ai:["Start with Python and data foundations before moving into machine learning.","Join the core Machine Learning and Data Science track, with hands-on mini projects.","Move to Deep Learning, NLP, and Generative AI, with a project-led approach.","Join advanced GenAI, RAG, and MLOps projects, and build a deployable portfolio."],
  dm:["Start with digital marketing fundamentals: search, social media, and content basics.","Join the core track covering SEO, paid ads, and analytics, with live campaign practice.","Move to advanced paid media, automation, and conversion optimisation.","Join advanced strategy and analytics projects, with real campaign ownership."],
- cc:["Start with cloud, Linux, and networking fundamentals before choosing a platform.","Join the core cloud track on one platform, with guided labs.","Move to containers, DevOps, and Infrastructure as Code, with project labs.","Join advanced architecture, automation, and certification preparation."]};
+ ib:["Start with accounting, financial statements, and Excel basics before valuation.","Join the core track on financial modelling and valuation, with guided case studies.","Move to advanced M&A, LBO, and capital markets modelling, with deal-style projects.","Join advanced deal simulation, pitch-book, and interview preparation projects."]};
 const LEVELS=["Beginner","Developing","Proficient","Advanced"];
 
 const S={screen:"welcome",name:"",course:"",qs:[],ans:[],i:0,date:null};
@@ -161,7 +161,7 @@ function go(s){S.screen=s;render();window.scrollTo(0,0);setTimeout(()=>{const h=
 function render(){
  if(S.screen=="welcome") app.innerHTML=`<section class="card hero"><div>
   <h1>Career readiness assessment</h1>
-  <p class="lead">A 15-question conversation guide for admission counsellors. It produces a clear skills profile and a recommended learning path for Artificial Intelligence, Digital Marketing, or Cloud Computing.</p>
+  <p class="lead">A 15-question conversation guide for admission counsellors. It produces a clear skills profile and a recommended learning path for Artificial Intelligence, Digital Marketing, or Investment Banking.</p>
   <button class="btn grn" data-a="start">Begin assessment</button></div>
   <ul><li><b>15 questions, about 10 minutes</b>Counsellor records the answers during the conversation.</li>
   <li><b>Personal data kept minimal</b>Only the student's name is entered. Nothing is stored or sent anywhere.</li>
