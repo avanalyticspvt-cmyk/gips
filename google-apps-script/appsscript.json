@@ -1,11 +1,1 @@
-{
-  "timeZone": "Asia/Kolkata",
-  "dependencies": {
-    "enabledAdvancedServices": []
-  },
-  "exceptionLogging": "STACKDRIVER",
-  "runtimeVersion": "V8",
-  "oauthScopes": [
-    "https://www.googleapis.com/auth/spreadsheets"
-  ]
-}
+{"timeZone":"Asia/Kolkata","exceptionLogging":"STACKDRIVER","runtimeVersion":"V8","webapp":{"executeAs":"USER_DEPLOYING","access":"ANYONE_ANONYMOUS"}}

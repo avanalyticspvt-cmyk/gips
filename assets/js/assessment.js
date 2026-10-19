@@ -40,11 +40,8 @@ const AssessmentController = {
       if (saved.rubricScore) this.rubricScore = saved.rubricScore;
       if (saved.counsellorNotes) this.counsellorNotes = saved.counsellorNotes;
       if (saved.selectedCourse) this.selectedCourse = saved.selectedCourse;
-      if (saved.currentStep && saved.currentStep > 1) {
-        // We will allow navigating to step if intake was completed
-        if (saved.studentProfile && saved.studentProfile.studentName) {
-          this.studentProfile = saved.studentProfile;
-        }
+      if (saved.studentProfile && saved.studentProfile.studentName) {
+        this.studentProfile = saved.studentProfile;
       }
     } catch (e) {
       console.warn("Could not load saved assessment answers:", e);
@@ -72,7 +69,6 @@ const AssessmentController = {
     const btnCourseConfirm = document.getElementById("btn-course-confirm");
     if (btnCourseConfirm) {
       btnCourseConfirm.addEventListener("click", () => {
-        this.renderStepQuestions();
         this.goToStep(3);
       });
     }
@@ -104,6 +100,14 @@ const AssessmentController = {
       });
     }
 
+    // Step 7 to Step 8: Proceed to Save
+    const btnProceedToSave = document.getElementById("btn-proceed-to-save");
+    if (btnProceedToSave) {
+      btnProceedToSave.addEventListener("click", () => {
+        this.goToStep(8);
+      });
+    }
+
     // Step 8 Sync to Sheets
     const btnSyncSheets = document.getElementById("btn-sync-sheets");
     if (btnSyncSheets) {
@@ -119,10 +123,18 @@ const AssessmentController = {
       });
     }
 
-    // Skip Sync to view report (offline mode)
+    // Step 8 Skip Sync to view report (offline mode)
     const btnViewReportOffline = document.getElementById("btn-view-report-offline");
     if (btnViewReportOffline) {
       btnViewReportOffline.addEventListener("click", () => {
+        this.goToStep(9);
+      });
+    }
+
+    // Step 8 Proceed to report after sync
+    const btnProceedToReport = document.getElementById("btn-proceed-to-report");
+    if (btnProceedToReport) {
+      btnProceedToReport.addEventListener("click", () => {
         this.goToStep(9);
       });
     }
@@ -158,6 +170,95 @@ const AssessmentController = {
         }
       });
     }
+
+    // Quick demo assessment loader
+    const demoBtn = document.getElementById("btn-quick-sample-assessment");
+    if (demoBtn) {
+      demoBtn.addEventListener("click", () => this.fillSampleAssessment());
+    }
+
+    // Clickable step indicator pills
+    document.querySelectorAll(".step-indicator-pill").forEach(pill => {
+      pill.style.cursor = "pointer";
+      pill.addEventListener("click", (e) => {
+        const step = parseInt(e.currentTarget.dataset.step, 10);
+        if (step) {
+          // If jumping forward from step 1, validate intake first
+          if (this.currentStep === 1 && step > 1) {
+            const res = IntakeController.validateAndSubmit();
+            if (!res.valid) return;
+            this.studentProfile = res.profile;
+            this.selectedCourse = res.profile.courseInterest;
+          }
+          this.goToStep(step);
+        }
+      });
+    });
+  },
+
+  /**
+   * Fills sample data across all steps for quick full-flow evaluation.
+   */
+  fillSampleAssessment(course = "ai") {
+    // 1. Fill Intake
+    IntakeController.fillSampleData(course);
+    const res = IntakeController.validateAndSubmit();
+    this.studentProfile = res.profile;
+    this.selectedCourse = course;
+
+    // 2. Sample Answers for Common Questions
+    this.answers.cb_motivation = "upskilling_current";
+    this.answers.cb_prior_experience = "moderate";
+    this.answers.cb_primary_goal = "career_switch";
+    this.answers.cb_target_role = course === "ai" ? "Junior AI Engineer" : (course === "digital_marketing" ? "SEO & Performance Specialist" : "Cloud Solutions Associate");
+    this.answers.cb_target_timeline = "3_months";
+    this.answers.cb_salary_expectation = "mid_5_8";
+    this.answers.cb_internship_openness = "highly_open";
+    this.answers.cr_digital_literacy = "4";
+    this.answers.cr_english_communication = "4";
+    this.answers.cr_problem_solving = "4";
+    this.answers.cr_practical_work = "yes_guided";
+    this.answers.cr_weekly_hours = "15_to_20";
+
+    // 3. Sample Answers for Course Specific Questions
+    if (course === "ai") {
+      this.answers.ai_q1_chatgpt = "intermediate";
+      this.answers.ai_q2_python = "intermediate";
+      this.answers.ai_q3_math = "4";
+      this.answers.ai_q4_data = "intermediate";
+      this.answers.ai_q5_ml_concept = "correct";
+      this.answers.ai_q6_prior_project = "guided_lab";
+      this.answers.ai_q7_churn_scenario = "comprehensive";
+      this.answers.ai_q8_specialization = "generative_ai";
+      this.practicalQuizAnswers = { pq_ai_1: 1, pq_ai_2: 1, pq_ai_3: 1 };
+    } else if (course === "digital_marketing") {
+      this.answers.dm_q1_social_presence = "business_brand";
+      this.answers.dm_q2_organic_vs_paid = "correct";
+      this.answers.dm_q3_channel_awareness = "all_core";
+      this.answers.dm_q4_copywriting = "4";
+      this.answers.dm_q5_local_cafe_scenario = "multichannel_local";
+      this.answers.dm_q6_click_psychology = "relevance_value";
+      this.answers.dm_q7_analytics = "performance_metrics";
+      this.answers.dm_q8_specialization = "performance_paid";
+      this.practicalQuizAnswers = { pq_dm_1: 1, pq_dm_2: 1, pq_dm_3: 0 };
+    } else if (course === "cloud_computing") {
+      this.answers.cloud_q1_academic_background = "tech_diploma";
+      this.answers.cloud_q2_server_concept = "correct";
+      this.answers.cloud_q3_linux = "intermediate";
+      this.answers.cloud_q4_ip_networking = "correct";
+      this.answers.cloud_q5_cloud_providers = "provisioned_infra";
+      this.answers.cloud_q6_storage_types = "correct";
+      this.answers.cloud_q7_deployments = "managed_hosting";
+      this.answers.cloud_q8_specialization = "cloud_engineer";
+      this.practicalQuizAnswers = { pq_cloud_1: 2, pq_cloud_2: 1, pq_cloud_3: 1 };
+    }
+
+    this.rubricScore = 4;
+    this.counsellorNotes = "Demonstrates strong foundational motivation and clear analytical logic. Well-suited for guided cohort.";
+    this.includeNotesInReport = false;
+
+    this.saveState();
+    this.goToStep(6); // Jump straight to review
   },
 
   /**
@@ -165,6 +266,15 @@ const AssessmentController = {
    */
   goToStep(stepNumber) {
     if (stepNumber < 1 || stepNumber > this.totalSteps) return;
+
+    // Ensure student profile is available if past step 1
+    if (stepNumber > 1 && !this.studentProfile) {
+      const raw = IntakeController.getFormData();
+      if (raw.studentName) {
+        this.studentProfile = raw;
+        this.selectedCourse = raw.courseInterest || this.selectedCourse || "ai";
+      }
+    }
 
     // Hide all step sections
     for (let i = 1; i <= this.totalSteps; i++) {
@@ -193,6 +303,8 @@ const AssessmentController = {
       this.renderPracticalQuestions();
     } else if (stepNumber === 6) {
       this.renderReviewSummary();
+    } else if (stepNumber === 7) {
+      this.renderScorePreviewStep();
     } else if (stepNumber === 9) {
       this.renderReportView();
     } else if (stepNumber === 10) {
@@ -229,10 +341,10 @@ const AssessmentController = {
    * Populates Step 2 Course Confirmation cards.
    */
   populateCourseConfirmStep() {
-    const courseId = this.selectedCourse || "ai";
+    const courseId = this.selectedCourse || (this.studentProfile && this.studentProfile.courseInterest) || "ai";
     const course = (typeof CONFIG !== "undefined" && CONFIG.COURSES && CONFIG.COURSES[courseId.toUpperCase()])
       ? CONFIG.COURSES[courseId.toUpperCase()]
-      : { title: "Artificial Intelligence", description: "AI & ML", badge: "AI" };
+      : { title: "Artificial Intelligence (AI)", description: "AI & ML", badge: "AI" };
 
     const titleEl = document.getElementById("course-confirm-title");
     if (titleEl) titleEl.textContent = course.title;
@@ -242,7 +354,7 @@ const AssessmentController = {
 
     const studentNameEl = document.getElementById("course-confirm-student");
     if (studentNameEl && this.studentProfile) {
-      studentNameEl.textContent = this.studentProfile.studentName;
+      studentNameEl.textContent = this.studentProfile.studentName || "the candidate";
     }
   },
 
@@ -251,7 +363,13 @@ const AssessmentController = {
    */
   renderCommonQuestions() {
     const container = document.getElementById("common-questions-container");
-    if (!container || container.innerHTML.trim() !== "") return; // Already rendered
+    if (!container) return;
+
+    // Only render if empty to preserve user inputs
+    if (container.innerHTML.trim() !== "") {
+      this.restoreQuestionValues(container);
+      return;
+    }
 
     const qBank = typeof QUESTION_BANK !== "undefined" ? QUESTION_BANK : null;
     if (!qBank) return;
@@ -292,7 +410,9 @@ const AssessmentController = {
     const qBank = typeof QUESTION_BANK !== "undefined" ? QUESTION_BANK : null;
     if (!qBank) return;
 
-    const courseData = qBank[this.selectedCourse] || qBank.ai;
+    const courseId = this.selectedCourse || (this.studentProfile && this.studentProfile.courseInterest) || "ai";
+    const courseData = qBank[courseId] || qBank.ai;
+
     let html = `
       <div class="assessment-section-group">
         <h3 class="group-title">${courseData.title} — Conceptual & Technical Diagnostic</h3>
@@ -319,8 +439,9 @@ const AssessmentController = {
     const qBank = typeof QUESTION_BANK !== "undefined" ? QUESTION_BANK : null;
     if (!qBank) return;
 
-    const quizList = (qBank.practicalQuiz && qBank.practicalQuiz[this.selectedCourse])
-      ? qBank.practicalQuiz[this.selectedCourse]
+    const courseId = this.selectedCourse || (this.studentProfile && this.studentProfile.courseInterest) || "ai";
+    const quizList = (qBank.practicalQuiz && qBank.practicalQuiz[courseId])
+      ? qBank.practicalQuiz[courseId]
       : [];
 
     let html = `
@@ -349,14 +470,26 @@ const AssessmentController = {
       `;
     });
 
+    // Determine current scenario text based on course
+    let scenarioTitle = "House Price Regression Prediction";
+    let scenarioDescription = "A real estate platform wants to predict house prices based on location, area, and bedrooms. What additional features would help, and how might an AI algorithm learn relationships?";
+    if (courseId === "digital_marketing") {
+      scenarioTitle = "Ad Campaign ROI & Commercial Evaluation";
+      scenarioDescription = "A business spends ₹10,000 on ads and generates 50 enquiries. What additional information is needed to determine whether this campaign was truly profitable (CAC, conversion rate, margins)?";
+    } else if (courseId === "cloud_computing") {
+      scenarioTitle = "Cloud Web Server Inaccessible Outage";
+      scenarioDescription = "A company web app on a cloud VM reports 'Connection Timed Out'. What diagnostic sequence would you perform (DNS -> Firewall Port 80/443 -> Nginx process status -> Local curl)?";
+    }
+
     // Counsellor Practical Scenario Evaluation Rubric
     html += `
-      <div class="rubric-card">
+      <div class="rubric-card" id="qcard-practical-rubric">
         <div class="rubric-header">
           <span class="q-difficulty diff-rubric">COUNSELLOR RUBRIC</span>
-          <h4>Practical Scenario Evaluated Score (1–5)</h4>
+          <h4>Scenario: ${scenarioTitle}</h4>
         </div>
-        <p class="rubric-guidance">Rate the candidate's analytical reasoning, problem structuring, and practical scenario response:</p>
+        <p style="font-size: 0.9rem; color: #1e293b; margin-bottom: 0.75rem; line-height: 1.45;"><strong>Problem Prompt:</strong> <em>"${scenarioDescription}"</em></p>
+        <p class="rubric-guidance">Rate the candidate's analytical reasoning, problem breakdown, and practical scenario response:</p>
         <div class="likert-buttons">
           ${[1, 2, 3, 4, 5].map(v => `
             <button type="button" class="btn-likert ${this.rubricScore === v ? 'selected' : ''}" data-rubric-val="${v}">
@@ -382,7 +515,7 @@ const AssessmentController = {
 
     // Bind Rubric buttons
     container.querySelectorAll(".btn-likert[data-rubric-val]").forEach(btn => {
-      btn.addEventListener("click", (e) => {
+      btn.addEventListener("click", () => {
         container.querySelectorAll(".btn-likert[data-rubric-val]").forEach(b => b.classList.remove("selected"));
         btn.classList.add("selected");
         this.rubricScore = parseInt(btn.dataset.rubricVal, 10);
@@ -444,13 +577,13 @@ const AssessmentController = {
       inputHTML = `
         <div class="rubric-scenario-box">
           <p class="rubric-scenario-prompt"><strong>Evaluation Rubric:</strong> ${q.rubricPrompt}</p>
-          <div class="counsellor-rubric-rating">
+          <div class="counsellor-rubric-rating" style="margin-top: 0.75rem;">
             <span class="rubric-label">Counsellor Scenario Rating (1–5):</span>
-            <div class="rating-radios">
+            <div class="rating-radios" style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
               ${[1, 2, 3, 4, 5].map(v => `
-                <label class="rating-radio">
+                <label class="radio-card" style="padding: 0.4rem 0.8rem; cursor: pointer;">
                   <input type="radio" name="${q.id}" value="${v}">
-                  <span class="rating-pill">${v}</span>
+                  <span style="font-weight: 700; margin-left: 0.3rem;">${v}</span>
                 </label>
               `).join("")}
             </div>
@@ -485,9 +618,14 @@ const AssessmentController = {
         if (input.type === "radio") {
           if (input.checked) {
             this.answers[input.name] = input.value;
+            // Clear card-error if answered
+            const card = document.getElementById(`qcard-${input.name}`);
+            if (card) card.classList.remove("card-error");
           }
         } else {
           this.answers[input.name] = input.value;
+          const card = document.getElementById(`qcard-${input.name}`);
+          if (card && input.value.trim() !== "") card.classList.remove("card-error");
         }
         this.saveState();
       };
@@ -520,16 +658,22 @@ const AssessmentController = {
    * Validates mandatory questions in the current step before advancing.
    */
   validateCurrentStep() {
-    // Current step validation logic
+    let firstErrorCard = null;
+
     if (this.currentStep === 3) {
       // Validate common background requirements
       const required = ["cb_motivation", "cb_prior_experience", "cb_primary_goal", "cb_target_role", "cb_target_timeline", "cr_digital_literacy", "cr_english_communication", "cr_problem_solving", "cr_practical_work", "cr_weekly_hours"];
       let allValid = true;
+
       required.forEach(qId => {
-        if (!this.answers[qId]) {
+        const val = this.answers[qId];
+        if (val === undefined || val === null || String(val).trim() === "") {
           allValid = false;
           const card = document.getElementById(`qcard-${qId}`);
-          if (card) card.classList.add("card-error");
+          if (card) {
+            card.classList.add("card-error");
+            if (!firstErrorCard) firstErrorCard = card;
+          }
         } else {
           const card = document.getElementById(`qcard-${qId}`);
           if (card) card.classList.remove("card-error");
@@ -537,10 +681,50 @@ const AssessmentController = {
       });
 
       if (!allValid) {
-        alert("Please answer all mandatory questions in this section before continuing.");
+        if (firstErrorCard) {
+          firstErrorCard.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        alert("Please answer all mandatory questions highlighted in red before proceeding.");
         return false;
       }
     }
+
+    if (this.currentStep === 4) {
+      // Validate that candidate has answered course-specific questions
+      const courseId = this.selectedCourse || "ai";
+      const coreKeys = {
+        ai: ["ai_q1_chatgpt", "ai_q2_python", "ai_q3_math", "ai_q4_data", "ai_q5_ml_concept", "ai_q6_prior_project", "ai_q7_churn_scenario", "ai_q8_specialization"],
+        digital_marketing: ["dm_q1_social_presence", "dm_q2_organic_vs_paid", "dm_q3_channel_awareness", "dm_q4_copywriting", "dm_q5_local_cafe_scenario", "dm_q6_click_psychology", "dm_q7_analytics", "dm_q8_specialization"],
+        cloud_computing: ["cloud_q1_academic_background", "cloud_q2_server_concept", "cloud_q3_linux", "cloud_q4_ip_networking", "cloud_q5_cloud_providers", "cloud_q6_storage_types", "cloud_q7_deployments", "cloud_q8_specialization"]
+      };
+
+      const required = coreKeys[courseId] || coreKeys.ai;
+      let allValid = true;
+
+      required.forEach(qId => {
+        const val = this.answers[qId];
+        if (val === undefined || val === null || String(val).trim() === "") {
+          allValid = false;
+          const card = document.getElementById(`qcard-${qId}`);
+          if (card) {
+            card.classList.add("card-error");
+            if (!firstErrorCard) firstErrorCard = card;
+          }
+        } else {
+          const card = document.getElementById(`qcard-${qId}`);
+          if (card) card.classList.remove("card-error");
+        }
+      });
+
+      if (!allValid) {
+        if (firstErrorCard) {
+          firstErrorCard.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        alert("Please answer all domain diagnostic questions highlighted before advancing.");
+        return false;
+      }
+    }
+
     return true;
   },
 
@@ -551,36 +735,49 @@ const AssessmentController = {
     const summaryContainer = document.getElementById("review-summary-container");
     if (!summaryContainer) return;
 
-    const profile = this.studentProfile || {};
+    const profile = this.studentProfile || IntakeController.getFormData();
     const notesInput = document.getElementById("counsellor-notes-input");
     if (notesInput) notesInput.value = this.counsellorNotes || "";
 
     const includeNotesCheckbox = document.getElementById("include-counsellor-notes");
     if (includeNotesCheckbox) includeNotesCheckbox.checked = this.includeNotesInReport;
 
+    const courseId = this.selectedCourse || profile.courseInterest || "ai";
+    const courseConfig = (typeof CONFIG !== "undefined" && CONFIG.COURSES && CONFIG.COURSES[courseId.toUpperCase()])
+      ? CONFIG.COURSES[courseId.toUpperCase()]
+      : { title: courseId.toUpperCase() };
+
     summaryContainer.innerHTML = `
       <div class="review-card">
-        <h4>Student Details</h4>
+        <h4>Student Profile</h4>
         <div class="review-grid">
           <div><strong>Name:</strong> ${profile.studentName || "—"}</div>
           <div><strong>Email:</strong> ${profile.studentEmail || "—"}</div>
           <div><strong>Mobile:</strong> ${profile.studentMobile || "—"}</div>
-          <div><strong>Course:</strong> ${(profile.courseInterest || "").toUpperCase()}</div>
+          <div><strong>Course Track:</strong> ${courseConfig.title}</div>
           <div><strong>Education:</strong> ${profile.education || "—"} (${profile.specialization || "General"})</div>
-          <div><strong>Status:</strong> ${profile.currentStatus || "—"}</div>
+          <div><strong>Status:</strong> ${(profile.currentStatus || "—").replace(/_/g, " ")} (${profile.experienceYears || "0"} yrs exp)</div>
         </div>
       </div>
       <div class="review-card">
-        <h4>Assessment Answers Summary</h4>
-        <p class="text-muted">Total verified question responses recorded: ${Object.keys(this.answers).length} items.</p>
-        <button type="button" class="btn btn-secondary btn-sm" id="btn-edit-answers">Review / Edit Answers</button>
+        <h4>Diagnostic Answers Recorded</h4>
+        <p class="text-muted" style="margin-bottom: 0.75rem;">Verified question responses: <strong>${Object.keys(this.answers).length} items</strong> recorded.</p>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-edit-common">Edit Common Questions</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-edit-domain">Edit Domain Questions</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-edit-practical">Edit Practical Check</button>
+        </div>
       </div>
     `;
 
-    const editBtn = document.getElementById("btn-edit-answers");
-    if (editBtn) {
-      editBtn.addEventListener("click", () => this.goToStep(3));
-    }
+    const editCommon = document.getElementById("btn-edit-common");
+    if (editCommon) editCommon.onclick = () => this.goToStep(3);
+
+    const editDomain = document.getElementById("btn-edit-domain");
+    if (editDomain) editDomain.onclick = () => this.goToStep(4);
+
+    const editPractical = document.getElementById("btn-edit-practical");
+    if (editPractical) editPractical.onclick = () => this.goToStep(5);
   },
 
   /**
@@ -592,6 +789,20 @@ const AssessmentController = {
 
     const includeNotesCheckbox = document.getElementById("include-counsellor-notes");
     this.includeNotesInReport = includeNotesCheckbox ? includeNotesCheckbox.checked : false;
+
+    // Check if practical scenario rubric was rated in Step 4
+    const scenarioKey = `${this.selectedCourse}_practical_scenario`;
+    if (this.answers[scenarioKey]) {
+      const parsedVal = parseInt(this.answers[scenarioKey], 10);
+      if (parsedVal >= 1 && parsedVal <= 5) {
+        this.rubricScore = parsedVal;
+      }
+    }
+
+    // Ensure studentProfile exists
+    if (!this.studentProfile) {
+      this.studentProfile = IntakeController.getFormData();
+    }
 
     // Run transparent scoring engine
     this.scoringResults = Scoring.calculateAssessment(
@@ -633,7 +844,7 @@ const AssessmentController = {
       <div class="score-calculation-card">
         <div class="score-dial-large">
           <span class="score-dial-number">${s.overallScore}</span>
-          <span class="score-dial-sub">Overall Readiness Score / 100</span>
+          <span class="score-dial-sub">Readiness Score / 100</span>
         </div>
         <div class="score-band-banner" style="background-color: ${band.color}; color: #ffffff;">
           <h3>${band.label}</h3>
@@ -698,11 +909,6 @@ const AssessmentController = {
         </div>
       </div>
     `;
-
-    const btnToStep8 = document.getElementById("btn-proceed-to-save");
-    if (btnToStep8) {
-      btnToStep8.onclick = () => this.goToStep(8);
-    }
   },
 
   /**
@@ -736,17 +942,20 @@ const AssessmentController = {
         statusEl.className = "sync-status-box status-success";
         statusEl.innerHTML = `<strong>&check; Success!</strong> ${result.message}`;
       }
-      if (proceedBtn) proceedBtn.style.display = "inline-block";
-      // Auto-advance to report after 1.5 seconds on success
-      setTimeout(() => this.goToStep(9), 1500);
+      if (proceedBtn) {
+        proceedBtn.textContent = "View Student Report • Next →";
+        proceedBtn.style.display = "inline-block";
+      }
+      // Auto-advance to report after 1.2 seconds on success
+      setTimeout(() => this.goToStep(9), 1200);
     } else {
       if (statusEl) {
         statusEl.className = "sync-status-box status-error";
-        statusEl.innerHTML = `<strong>&excl; Sync Warning:</strong> ${result.message}`;
+        statusEl.innerHTML = `<strong>&excl; Sync Notice:</strong> ${result.message}`;
       }
       if (retryBtn) retryBtn.style.display = "inline-block";
       if (proceedBtn) {
-        proceedBtn.textContent = "View Report Offline &bull; Next &rarr;";
+        proceedBtn.textContent = "View Report Offline • Next →";
         proceedBtn.style.display = "inline-block";
       }
     }
@@ -756,7 +965,7 @@ const AssessmentController = {
    * Formats the payload according to Google Sheets schema.
    */
   buildSpreadsheetPayload() {
-    const profile = this.studentProfile || {};
+    const profile = this.studentProfile || IntakeController.getFormData();
     const scores = this.scoringResults || {};
     const recs = this.recommendations || {};
     const cats = scores.categoryScores || {};
@@ -770,7 +979,7 @@ const AssessmentController = {
       studentEmail: profile.studentEmail,
       studentMobile: profile.studentMobile,
       consentStatus: profile.consent ? "Granted" : "Withheld",
-      courseInterest: profile.courseInterest,
+      courseInterest: profile.courseInterest || this.selectedCourse,
       education: profile.education,
       specialization: profile.specialization,
       currentStatus: profile.currentStatus,
@@ -816,6 +1025,10 @@ const AssessmentController = {
     const reportContainer = document.getElementById("report-view-container");
     if (!reportContainer) return;
 
+    if (!this.studentProfile) {
+      this.studentProfile = IntakeController.getFormData();
+    }
+
     if (!this.scoringResults || !this.recommendations) {
       this.scoringResults = Scoring.calculateAssessment(this.answers, this.selectedCourse, this.practicalQuizAnswers, this.rubricScore, this.counsellorNotes);
       this.recommendations = Recommendations.generate(this.studentProfile, this.selectedCourse, this.scoringResults);
@@ -836,9 +1049,10 @@ const AssessmentController = {
    * Renders Step 10 Counsellor Action Checklist.
    */
   renderActionPlanStep() {
+    const profile = this.studentProfile || IntakeController.getFormData();
     const nameEl = document.getElementById("action-plan-student-name");
-    if (nameEl && this.studentProfile) {
-      nameEl.textContent = this.studentProfile.studentName;
+    if (nameEl && profile) {
+      nameEl.textContent = profile.studentName || "Candidate";
     }
 
     const nextActionEl = document.getElementById("action-plan-recommended-action");
