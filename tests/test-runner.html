@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Goalfinity Institute — Automated Unit Test Runner</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      padding: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .header {
+      border-bottom: 2px solid #0b2545;
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .title { font-size: 1.5rem; font-weight: 800; color: #0b2545; }
+    .suite-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .suite-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #133e68;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 0.5rem;
+    }
+    .test-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      margin-bottom: 0.35rem;
+      font-size: 0.9rem;
+    }
+    .test-pass { background-color: #f0fdf4; color: #166534; }
+    .test-fail { background-color: #fef2f2; color: #991b1b; }
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .badge-pass { background: #dcfce7; color: #15803d; }
+    .badge-fail { background: #fee2e2; color: #b91c1c; }
+    .summary-card {
+      background: #0b2545;
+      color: #ffffff;
+      padding: 1.25rem 1.5rem;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .summary-stat { font-size: 1.8rem; font-weight: 900; }
+    .summary-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; }
+  </style>
+
+  <!-- Application Source Files -->
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/validation.js"></script>
+  <script src="../assets/js/questions.js"></script>
+  <script src="../assets/js/scoring.js"></script>
+  <script src="../assets/js/recommendations.js"></script>
+
+  <!-- Test Suite Files -->
+  <script src="validation-tests.js"></script>
+  <script src="scoring-tests.js"></script>
+  <script src="recommendation-tests.js"></script>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1 class="title">Goalfinity Assessment Platform — Test Suite</h1>
+      <p style="color: #64748b; font-size: 0.9rem;">Automated assertions for validation, scoring math, and recommendations.</p>
+    </div>
+    <a href="../index.html" style="color: #00a896; font-weight: 600; text-decoration: none;">&larr; Back to App</a>
+  </div>
+
+  <div class="summary-card" id="summary-card">
+    <div>
+      <div class="summary-stat" id="stat-total">0</div>
+      <div class="summary-label">Total Tests</div>
+    </div>
+    <div>
+      <div class="summary-stat" id="stat-passed" style="color: #34d399;">0</div>
+      <div class="summary-label">Passed</div>
+    </div>
+    <div>
+      <div class="summary-stat" id="stat-failed" style="color: #f87171;">0</div>
+      <div class="summary-label">Failed</div>
+    </div>
+  </div>
+
+  <div id="test-output"></div>
+
+  <script>
+    // Lightweight browser-compatible assertion framework
+    (function() {
+      let currentSuiteEl = null;
+      let totalTests = 0;
+      let passedTests = 0;
+      let failedTests = 0;
+
+      const assert = {
+        suite(name) {
+          const container = document.getElementById("test-output");
+          currentSuiteEl = document.createElement("div");
+          currentSuiteEl.className = "suite-card";
+          currentSuiteEl.innerHTML = `<h2 class="suite-title">${name}</h2><div class="suite-body"></div>`;
+          container.appendChild(currentSuiteEl);
+        },
+        test(desc, fn) {
+          totalTests++;
+          const body = currentSuiteEl.querySelector(".suite-body");
+          const item = document.createElement("div");
+
+          try {
+            fn();
+            passedTests++;
+            item.className = "test-item test-pass";
+            item.innerHTML = `<span>&check; ${desc}</span><span class="badge badge-pass">PASS</span>`;
+          } catch (err) {
+            failedTests++;
+            item.className = "test-item test-fail";
+            item.innerHTML = `<span>&cross; ${desc} &bull; <small>${err.message}</small></span><span class="badge badge-fail">FAIL</span>`;
+            console.error(`Test failed: ${desc}`, err);
+          }
+          body.appendChild(item);
+        },
+        strictEqual(actual, expected, msg) {
+          if (actual !== expected) {
+            throw new Error(msg || `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+          }
+        },
+        ok(val, msg) {
+          if (!val) throw new Error(msg || "Assertion failed: value is not truthy");
+        }
+      };
+
+      // Run all test suites
+      try {
+        if (typeof runValidationTests === "function") runValidationTests(assert);
+        if (typeof runScoringTests === "function") runScoringTests(assert);
+        if (typeof runRecommendationTests === "function") runRecommendationTests(assert);
+      } catch (e) {
+        console.error("Error executing test suites:", e);
+      }
+
+      // Update summary counts
+      document.getElementById("stat-total").textContent = totalTests;
+      document.getElementById("stat-passed").textContent = passedTests;
+      document.getElementById("stat-failed").textContent = failedTests;
+    })();
+  </script>
+</body>
+</html>
